@@ -9,21 +9,19 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
+from contextlib import suppress
 import os
 from pathlib import Path
+from .secret_config import *
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-if "CSRF_TRUSTED_ORIGINS" in os.environ:
-    CSRF_TRUSTED_ORIGINS = [os.environ["CSRF_TRUSTED_ORIGINS"]]
-else:
-    CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:21114"]
-    SECURE_CROSS_ORIGIN_OPENER_POLICY = 'None'
+CSRF_TRUSTED_ORIGINS = [CSRF_TRUSTED_ORIGINS] if isinstance(CSRF_TRUSTED_ORIGINS, str) else CSRF_TRUSTED_ORIGINS
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", 'j%7yjvygpih=6b%qf!q%&ixpn+27dngzdu-i3xh-^3xgy3^nnc')
 # ID服务器IP或域名，一般与中继服务器，用于web client
 ID_SERVER = os.environ.get("ID_SERVER", '')
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -31,18 +29,6 @@ DEBUG = os.environ.get("DEBUG", False)
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 ALLOWED_HOSTS = ["*"]
 AUTH_USER_MODEL = 'api.UserProfile'      #AppName.自定义user
-
-ALLOW_REGISTRATION = os.environ.get("ALLOW_REGISTRATION", "True") == "True"               # 是否允许注册, True为允许，False为不允许
-
-#==========数据库配置 开始=====================
-DATABASE_TYPE = os.environ.get("DATABASE_TYPE", 'SQLITE')
-MYSQL_DBNAME = os.environ.get("MYSQL_DBNAME", '-')
-MYSQL_HOST = os.environ.get("MYSQL_HOST", '127.0.0.1')
-MYSQL_USER = os.environ.get("MYSQL_USER", '-')
-MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", '-')
-MYSQL_PORT = os.environ.get("MYSQL_PORT", '3306')
-#==========数据库配置 结束=====================
-
 
 # Application definition
 
@@ -54,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',
-    'webui',
 ]
 
 MIDDLEWARE = [
@@ -92,26 +77,13 @@ WSGI_APPLICATION = 'rustdesk_server_api.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db/db.sqlite3',
     }
 }
-if DATABASE_TYPE == 'MYSQL' and MYSQL_DBNAME!='-' and USER!= '-' and PASSWORD!='-':
-    # 简单通过数据库名、账密信息过滤下，防止用户未配置mysql却使用mysql
-    DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': MYSQL_DBNAME,               # 数据库名
-        'HOST': MYSQL_HOST,                 # 数据库服务器IP
-        'USER': MYSQL_USER,                 # 数据库用户名
-        'PASSWORD': MYSQL_PASSWORD,         # 数据库密码
-        'PORT': MYSQL_PORT,                 # 端口
-        'OPTIONS': {'charset': 'utf8'},
-    }
-}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -135,8 +107,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
-LANGUAGE_CODE = 'zh-hans'
-TIME_ZONE = 'Asia/Shanghai'
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -156,5 +128,7 @@ if DEBUG:
 
 else:
 
-
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')     # 新增
+
+with suppress(ImportError):
+    from .secret_config import *  # noqa

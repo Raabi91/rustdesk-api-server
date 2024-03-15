@@ -1,2 +1,2 @@
 django
-xlwt
+gunicorn
